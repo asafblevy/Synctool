@@ -19,7 +19,7 @@ function Title {
 
 
 function MainMenu {
-#echo -e "\nSyncTool\n--------\n" 
+clear
 Title
 cat $SYNCDB
 echo -e "$MENU\n"
@@ -43,7 +43,11 @@ function VersionMenu {
 
                 echo -e "\n[NUM] View version files\n[m] Return to Main Menu\n"
                 read -p "Choose an Option: " VER_OPT ; echo
-		FileMenu
+		if [ $VER_OPT -le $TOT_VER 2> /dev/null ] ; then
+			FileMenu
+		elif [ $VER_OPT != "m" 2> /dev/null ] && [ $VER_OPT != "M" 2>/dev/null] ; then
+			echo "Invalid"
+		fi
         done
 
         unset VER_OPT
@@ -51,19 +55,42 @@ function VersionMenu {
 }
 
 function FileMenu {
-	if [ $VER_OPT -le $TOT_VER 2> /dev/null ] ; then
-		TITLE2=`echo "-> ${VER_ARR[$VER_OPT-1]}"`
-		clear
-		Title
-		sudo -u sync ssh $IP "ls -ltr /tmp/backup/${VER_ARR[$VER_OPT-1]}" ; echo
-		read -p "[KEY] Return to version Menu "
-		clear
-	elif [ $VER_OPT != "m" ] && [ $VER_OPT != "M" ] ; then
-		echo "Invalid"
-        fi
-	unset TITLE2 
+	while [[ $FILE_OPT != "m" ]] && [[ $FILE_OPT != "M" ]] ; do
 
+			TITLE2=`echo "-> ${VER_ARR[$VER_OPT-1]}"`
+			clear
+			Title
+			sudo -u sync ssh $IP "ls -ltr /tmp/backup/${VER_ARR[$VER_OPT-1]}" ; echo
+			read -p "Choose an Option: \n[d] Delete specific files\n[m] Return to Version Menu " FILE_OPT ; echo
+			if [[ $FILE_OPT == "d" ]] || [[ $FILE_OPT == "D" ]] ; then
+                                FileDelete
+                        elif [ $FILE_OPT != "m" ] && [ $FILE_OPT != "M" ] ; then
+                                echo "invalid"
+                        fi
+			clear
+		unset TITLE2 
+	done
+	unset FILE_OPT
 }
+function FileDelete {
+	read -p "Which files do you want to delete? (Seperated by Space) " DELETED ; echo
+	DEL_ARR=($DELETED)
+	DELCHK=`sudo -u sync ssh $IP "ls -ltr /tmp/backup/${VER_ARR[$VER_OPT-1]}" | awk '{print $9}'`
+	DELCHK_ARR=($DELCHK)
+	for file in $DEL_ARR ; do
+		if [[ " ${DELCHK_ARR[@]} " =~ " ${file} " ]]; then
+    # whatever you want to do when array contains value
+			sudo -u sync ssh $IP "rm /tmp/backup/${VER_ARR[$VER_OPT-1]}/$file" && echo -e "$file deleted"
+		else
+			echo -e "$file not found"
+		fi
+
+#		if [[ ! " ${array[@]} " =~ " ${value} " ]]; then
+    # whatever you want to do when array doesn't contain value
+#		fi
+	done	
+}
+
 function AddBackup {
 	echo
 }
