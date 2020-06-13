@@ -3,7 +3,7 @@ clear
 FILEDB="/home/asi/projects/synctool/file.db"
 SYNCDB="/home/asi/projects/synctool/sync.db"
 MENU="\n[NUM] Manage single Backup\n[a] Add new Path\n[b] Backup all Paths\n[exit] Exit"
-IP="3.124.181.124"
+IP="18.156.66.217"
 
 function Title {
         TITLE="SyncTool $TITLE1 $TITLE2"
@@ -61,48 +61,49 @@ function FileMenu {
 			clear
 			Title
 			sudo -u sync ssh $IP "ls -ltr /tmp/backup/${VER_ARR[$VER_OPT-1]}" ; echo
-			read -p "Choose an Option: \n[d] Delete specific files\n[m] Return to Version Menu " FILE_OPT ; echo
-			if [[ $FILE_OPT == "d" ]] || [[ $FILE_OPT == "D" ]] ; then
-                                FileDelete
-                        elif [ $FILE_OPT != "m" ] && [ $FILE_OPT != "M" ] ; then
-                                echo "invalid"
-                        fi
-			clear
-		unset TITLE2 
-	done
-	unset FILE_OPT
-}
-function FileDelete {
-	read -p "Which files do you want to delete? (Seperated by Space) " DELETED ; echo
-	DEL_ARR=($DELETED)
-	DELCHK=`sudo -u sync ssh $IP "ls -ltr /tmp/backup/${VER_ARR[$VER_OPT-1]}" | awk '{print $9}'`
-	DELCHK_ARR=($DELCHK)
-	for file in $DEL_ARR ; do
-		if [[ " ${DELCHK_ARR[@]} " =~ " ${file} " ]]; then
-    # whatever you want to do when array contains value
-			sudo -u sync ssh $IP "rm /tmp/backup/${VER_ARR[$VER_OPT-1]}/$file" && echo -e "$file deleted"
-		else
-			echo -e "$file not found"
-		fi
+				echo -e "\n[d] Delete specific files\n[m] Return to Version Menu "
+				read -p "Choose an Option: " FILE_OPT ; echo
+				if [[ $FILE_OPT == "d" ]] || [[ $FILE_OPT == "D" ]] ; then
+					FileDelete
+				elif [ $FILE_OPT != "m" ] && [ $FILE_OPT != "M" ] ; then
+					echo "invalid"
+				fi
+				clear
+			unset TITLE2 
+		done
+		unset FILE_OPT
+	}
+	function FileDelete {
+		read -p "Which files do you want to delete? (Seperated by Space): " DELETED ; echo
+		DEL_ARR=($DELETED)
+		DELCHK=`sudo -u sync ssh $IP "ls -ltr /tmp/backup/${VER_ARR[$VER_OPT-1]}" | awk '{print $9}'`
+		DELCHK_ARR=($DELCHK)
+		for file in ${DEL_ARR[*]} ; do
+		#Checks if $file exists in DELCHK_ARR
+			if [[ " ${DELCHK_ARR[@]} " =~ " ${file} " ]]; then
+	    # whatever you want to do when array contains value
+			#echo "works"
+				sudo -u sync ssh $IP "rm /tmp/backup/${VER_ARR[$VER_OPT-1]}/$file" && echo -e "$file deleted"
+			else
+				echo -e "$file not found"
+			fi
 
-#		if [[ ! " ${array[@]} " =~ " ${value} " ]]; then
-    # whatever you want to do when array doesn't contain value
-#		fi
-	done	
-}
+		done
+		echo ; read -p "Deletion Complete , Press any key to Return..."
+	}
 
-function AddBackup {
-	echo
-}
+	function AddBackup {
+		echo
+	}
 
-function BackupAll {
-	echo
-}
+	function BackupAll {
+		echo
+	}
 
 
-while [[ $OPTION != "e" ]] && [[ $OPTION != "E" ]] ; do
-        MainMenu
-        if [[ $OPTION =~ ^[0-9]+$ ]] ; then
+	while [[ $OPTION != "e" ]] && [[ $OPTION != "E" ]] ; do
+		MainMenu
+		if [[ $OPTION =~ ^[0-9]+$ ]] ; then
                 clear
 		VersionMenu
         elif [ $OPTION = "b" ] || [ $OPTION = "B" ] ; then
