@@ -61,10 +61,12 @@ function FileMenu {
 			clear
 			Title
 			sudo -u sync ssh $IP "ls -ltr /tmp/backup/${VER_ARR[$VER_OPT-1]}" ; echo
-				echo -e "\n[d] Delete specific files\n[m] Return to Version Menu "
+				echo -e "\n[r] Restore files\n[d] Delete specific files\n[m] Return to Version Menu "
 				read -p "Choose an Option: " FILE_OPT ; echo
 				if [[ $FILE_OPT == "d" ]] || [[ $FILE_OPT == "D" ]] ; then
 					FileDelete
+				elif [ $FILE_OPT == "r" ] || [ $FILE_OPT == "R" ] ; then
+					FileRestore
 				elif [ $FILE_OPT != "m" ] && [ $FILE_OPT != "M" ] ; then
 					echo "invalid"
 				fi
@@ -93,11 +95,35 @@ function FileMenu {
 	}
 
 	function AddBackup {
-		echo
+		
+		for dir in `cat $SYNCDB | awk '{print $2}'` ; do
+                sudo -u sync rsync --fake-super -avzhe ssh $dir// sync@$IP:/tmp/backup/
+                echo "done"
+                done
+		read -p "press any key to continue"
 	}
 
 	function BackupAll {
 		echo
+	}
+
+	function FileRestore {
+		read -p "Which files do you want to Restore? (Seperated by Space): " RESTORED ; echo
+                REST_ARR=($RESTORED)
+                RESTCHK=`sudo -u sync ssh $IP "ls -ltr /tmp/backup/${VER_ARR[$VER_OPT-1]}" | awk '{print $9}'`
+                RESTCHK_ARR=($RESTCHK)
+                for file in ${REST_ARR[*]} ; do
+                #Checks if $file exists in RESTCHK_ARR
+                        if [[ " ${RESTCHK_ARR[@]} " =~ " ${file} " ]]; then
+                                sudo -u sync ssh $IP "echo '/tmp/backup/${VER_ARR[$VER_OPT-1]}/$file'" && echo -e "$file restored"
+                        else
+                                echo -e "$file not found"
+                        fi
+
+                done
+                echo ; read -p "Restoration Complete , Press any key to Return..."
+
+
 	}
 
 
@@ -106,18 +132,18 @@ function FileMenu {
 		if [[ $OPTION =~ ^[0-9]+$ ]] ; then
                 clear
 		VersionMenu
-        elif [ $OPTION = "b" ] || [ $OPTION = "B" ] ; then
-                clear
-		echo "backup all"
-		BackupAll
-        elif [ $OPTION = "a" ] || [ $OPTION = "A" ] ; then
-                clear
-		echo "add backup"
-		AddBackup
-        elif [[ $OPTION = "e" ]] || [[ $OPTION = "E" ]] ; then
-                clear
-		echo "exiting..."
-        else
-                echo "Invalid"
-        fi
+        	elif [ $OPTION = "b" ] || [ $OPTION = "B" ] ; then
+                	clear
+			echo "backup all"
+			BackupAll
+        	elif [ $OPTION = "a" ] || [ $OPTION = "A" ] ; then
+                	clear
+			echo "add backup"
+			AddBackup
+        	elif [[ $OPTION = "e" ]] || [[ $OPTION = "E" ]] ; then
+                	clear
+			echo "exiting..."
+       	 	else
+                	echo "Invalid"
+        	fi
 done
