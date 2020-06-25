@@ -95,16 +95,16 @@ function FileMenu {
 	}
 
 	function AddBackup {
-		
-		for dir in `cat $SYNCDB | awk '{print $2}'` ; do
-                sudo -u sync rsync --fake-super -avzhe ssh $dir// sync@$IP:/tmp/backup/
-                echo "done"
-                done
-		read -p "press any key to continue"
+		echo
 	}
 
 	function BackupAll {
 		echo
+		for dir in `cat $SYNCDB | awk '{print $2}'` ; do
+                echo -e "Backing up $dir\n"
+                sudo rsync --fake-super -avzh -e "ssh -i /home/sync/.ssh/id_rsa" $dir// sync@$IP:/tmp/backup/ ; echo
+                done
+                read -p "press any key to continue"
 	}
 
 	function FileRestore {
@@ -112,10 +112,14 @@ function FileMenu {
                 REST_ARR=($RESTORED)
                 RESTCHK=`sudo -u sync ssh $IP "ls -ltr /tmp/backup/${VER_ARR[$VER_OPT-1]}" | awk '{print $9}'`
                 RESTCHK_ARR=($RESTCHK)
+		REST_PATH=`cat $SYNCDB | grep -w $VER_OPT | awk '{print $2}'`
                 for file in ${REST_ARR[*]} ; do
                 #Checks if $file exists in RESTCHK_ARR
                         if [[ " ${RESTCHK_ARR[@]} " =~ " ${file} " ]]; then
-                                sudo -u sync ssh $IP "echo '/tmp/backup/${VER_ARR[$VER_OPT-1]}/$file'" && echo -e "$file restored"
+				sudo rsync --fake-super -avzh -e "ssh -i /home/sync/.ssh/id_rsa" \
+				sync@$IP:/tmp/backup/${VER_ARR[$VER_OPT-1]}/$file $REST_PATH/$file-REST \
+				&& echo -e "$file restored"
+				#echo $file will be restored to $REST_PATH/
                         else
                                 echo -e "$file not found"
                         fi
