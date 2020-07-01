@@ -80,18 +80,21 @@ function FileMenu {
 		DEL_ARR=($DELETED)
 		DELCHK=`sudo -u sync ssh $IP "ls -ltr /tmp/backup/${VER_ARR[$VER_OPT-1]}" | awk '{print $9}'`
 		DELCHK_ARR=($DELCHK)
-		for file in ${DEL_ARR[*]} ; do
-		#Checks if $file exists in DELCHK_ARR
-			if [[ " ${DELCHK_ARR[@]} " =~ " ${file} " ]]; then
-	    # whatever you want to do when array contains value
-			#echo "works"
-				sudo -u sync ssh $IP "rm /tmp/backup/${VER_ARR[$VER_OPT-1]}/$file" && echo -e "$file deleted"
-			else
-				echo -e "$file not found"
-			fi
+		read -p "Are you sure you want to delete `echo ${DEL_ARR[@]}` ? (Y/N): " DEL_CONFIRM ; echo
+		if [ $DEL_CONFIRM = "y" ] || [ $DEL_CONFIRM = "Y" ] || [ $DEL_CONFIRM = "yes" ] || [ $DEL_CONFIRM = "YES" ] ; then
+			for file in ${DEL_ARR[*]} ; do
+			#Checks if $file exists in DELCHK_ARR
+				if [[ " ${DELCHK_ARR[@]} " =~ " ${file} " ]]; then
+	    	# whatever you want to do when array contains value
+				#echo "works"
+					sudo -u sync ssh $IP "rm /tmp/backup/${VER_ARR[$VER_OPT-1]}/$file" && echo -e "$file deleted"
+				else
+					echo -e "$file not found"
+				fi
 
-		done
-		echo ; read -p "Deletion Complete , Press any key to Return..."
+			done
+			echo ; read -p "Deletion Complete , Press any key to Return..."
+		fi
 	}
 
 	function AddBackup {
